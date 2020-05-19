@@ -1,0 +1,55 @@
+{
+	"name": "Practice AWS Java 11",
+	"dockerFile": "Dockerfile",
+
+	// NOTE: The following fields have to be changes if you are changing the remoteUser
+	//       1) runArgs, .aws folder
+	//       2) remoteUser, uncomment to use VSCode as root
+	//       3) Dockerfile:$USERNAME, if you would like to change the name of the remoteUser
+
+	// The arguments when starting the Docker container. Update the destination home folder, if the remoteUser is changed.
+	// --privileged is needed in the event DIND is used. Please refer to Dockerfile.
+	"runArgs": ["--privileged", "-v", "${env:HOME}${env:USERPROFILE}/.aws:/root/.aws", "-v", "${env:HOME}${env:USERPROFILE}/.aws:/home/vscode/.aws"],
+
+	"containerEnv": {
+		"SAM_CLI_TELEMETRY": "0",  // do not send telemetry from aws sam cli tool
+		"VSC_DIND": "dind"         // options: root (disable remoteUser below), nonroot, dind (requires -privileged above)
+	},
+
+	// Forward the Docker socket from the current host
+	// Reference: https://github.com/Microsoft/vscode-dev-containers/tree/master/containers/docker-in-docker
+	//            https://code.visualstudio.com/docs/remote/containers-advanced
+	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+
+	// If set to true, VS Code runs the container with the ENTRYPOINT AND CMD parameters:
+	// docker run -a STDOUT -a STDERR <other parameters>
+	//            --entrypoint /bin/sh <image>
+	//            -c echo Container started ; while sleep 1; do :; done
+	// We do not want to override this, because our Dockerfile contains ENTRYPOINT and CMD parameters
+	// Uncomment this to allow non-root access to Docker in the container, make sure to not set remoteUser field.
+	"overrideCommand": false,
+
+	// Set *default* container specific settings.json values on container create.
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"java.home": "/docker-java-home"
+	},
+	
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"dbaeumer.vscode-eslint",
+		"ms-azuretools.vscode-docker",
+		"amazonwebservices.aws-toolkit-vscode",
+		"eamodio.gitlens",
+		"donjayamanne.githistory"
+	],
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "java -version",
+
+	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "vscode"
+}
