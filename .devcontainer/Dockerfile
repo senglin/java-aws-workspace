@@ -74,7 +74,16 @@ RUN \
     && echo 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >> /home/${USERNAME}/.bashrc \
     && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv) \
     && brew tap aws/tap \
-    && brew install aws-sam-cli
+    && brew install aws-sam-cli \
+    #
+    # Install AWS ECS CLI
+    && sudo curl -o /usr/local/bin/ecs-cli https://s3.cn-north-1.amazonaws.com.cn/amazon-ecs-cli/ecs-cli-linux-amd64-latest \
+    && sudo chmod +x /usr/local/bin/ecs-cli \
+    #
+    # Install FARGATE CLI
+    && curl -L -o fargate-0.3.2-linux-amd64.zip https://github.com/awslabs/fargatecli/releases/download/0.3.2/fargate-0.3.2-linux-amd64.zip \
+    && sudo unzip fargate-0.3.2-linux-amd64.zip -d /usr/local/bin/ \
+    && rm -rf fargate-0.3.2-linux-amd64.zip
 
 # Docker installation
 RUN \
