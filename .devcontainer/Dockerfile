@@ -3,6 +3,37 @@
 # Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 
+FROM golang:1 AS fargatedist
+
+# Avoid warnings by switching to noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Configure apt, install packages and tools
+RUN apt-get update \
+    && apt-get -y install --no-install-recommends apt-utils dialog 2>&1 \
+    #
+    # Verify git, process tools, lsb-release (common in install instructions for CLIs) installed
+    && apt-get -y install git openssh-client zip vim less iproute2 procps lsb-release upx file make \
+    #
+    # SSL dependencies
+    && apt-get -y install apt-transport-https ca-certificates gnupg2 \
+    #
+    # Clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/* /tmp/gotools
+
+WORKDIR /fargate
+
+RUN git clone -b combined-fixes https://github.com/senglin/fargatecli.git .
+RUN go mod download
+RUN GOOS=linux GOARCH=amd64 go build -o fargate main.go
+
+# Switch back to dialog for any ad-hoc use of apt-get
+ENV DEBIAN_FRONTEND=dialog
+
+#-------------------------------------------------------------------------------------------------------------
+
 FROM openjdk:11-jdk
 
 # This Dockerfile adds a non-root user with sudo access. Use the "remoteUser"
@@ -25,11 +56,13 @@ RUN apt-get update \
     && export DEBIAN_FRONTEND=noninteractive \
     #
     # Verify git, common tools / libs installed, add/modify non-root user, optionally install zsh
-    && apt-get -y install --no-install-recommends curl ca-certificates 2>&1 \
+    && apt-get -y install --no-install-recommends curl vim ca-certificates 2>&1 \
     && curl -sSL  ${COMMON_SCRIPT_SOURCE} -o /tmp/common-setup.sh \
     && ([ "${COMMON_SCRIPT_SHA}" = "dev-mode" ] || (echo "${COMMON_SCRIPT_SHA} */tmp/common-setup.sh" | sha256sum -c -)) \
     && /bin/bash /tmp/common-setup.sh "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" \
     && rm /tmp/common-setup.sh
+ENV VISUAL=vim
+ENV EDITOR=vim
 
 #-------------------Uncomment the following steps to install Maven CLI Tools----------------------------------
 ARG MAVEN_VERSION=3.6.3
@@ -78,12 +111,13 @@ RUN \
     #
     # Install AWS ECS CLI
     && sudo curl -o /usr/local/bin/ecs-cli https://s3.cn-north-1.amazonaws.com.cn/amazon-ecs-cli/ecs-cli-linux-amd64-latest \
-    && sudo chmod +x /usr/local/bin/ecs-cli \
+    && sudo chmod +x /usr/local/bin/ecs-cli
     #
     # Install FARGATE CLI
-    && curl -L -o fargate-0.3.2-linux-amd64.zip https://github.com/awslabs/fargatecli/releases/download/0.3.2/fargate-0.3.2-linux-amd64.zip \
-    && sudo unzip fargate-0.3.2-linux-amd64.zip -d /usr/local/bin/ \
-    && rm -rf fargate-0.3.2-linux-amd64.zip
+COPY --from=fargatedist /fargate/fargate /usr/local/bin/
+    # && curl -L -o fargate-0.3.2-linux-amd64.zip https://github.com/awslabs/fargatecli/releases/download/0.3.2/fargate-0.3.2-linux-amd64.zip \
+    # && sudo unzip fargate-0.3.2-linux-amd64.zip -d /usr/local/bin/ \
+    # && rm -rf fargate-0.3.2-linux-amd64.zip
 
 # Docker installation
 RUN \
