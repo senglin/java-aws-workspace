@@ -118,6 +118,9 @@ COPY --from=fargatedist /fargate/fargate /usr/local/bin/
     # && curl -L -o fargate-0.3.2-linux-amd64.zip https://github.com/awslabs/fargatecli/releases/download/0.3.2/fargate-0.3.2-linux-amd64.zip \
     # && sudo unzip fargate-0.3.2-linux-amd64.zip -d /usr/local/bin/ \
     # && rm -rf fargate-0.3.2-linux-amd64.zip
+    #
+    # Install script to automate the emptying of AWS S3 bucket (with object versioning enabled)
+COPY aws-s3-empty-bucket.sh /usr/local/bin/
 
 # Docker installation
 RUN \
