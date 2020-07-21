@@ -1,7 +1,7 @@
-# AWS Practice Project for Java
+# An AWS Developent Environment for Java
 
 ## Purpose
-1. Provides a template for building Node Applications for AWS using Visual Studio Code.
+1. Provides a template for building Node Applications for AWS using Visual Studio Code, along with the associated tools.
 2. A containerized development environment using the [Remote-Containers](https://code.visualstudio.com/docs/remote/containers) extension.
 
 ## Requirements
